@@ -1,0 +1,36 @@
+datasets:
+  test1:
+    dataroot_LQ: /home/prrgpp000/cpa_enhanced/exp/imagenet/vgg16/attack/cp_direct/nodef/decor_5.3_t_7.7_tv_0.1_nv_0.13_l1_5.0/initial_images
+    mode: REC
+    name: Example_Dataset
+degradation:
+  scale: 1
+distortion: derain
+gpu_ids:
+- 0
+model: denoising
+name: my-refusion
+network_G:
+  setting:
+    dec_blk_nums:
+    - 1
+    - 1
+    - 1
+    - 1
+    enc_blk_nums:
+    - 1
+    - 1
+    - 1
+    - 28
+    middle_blk_num: 1
+    width: 64
+  which_model_G: ConditionalNAFNet
+path:
+  pretrain_model_G: /home/prrgpp000/image-restoration-sde/experiments/deraining/refusion-reconstruction/models/lastest_EMA.pth
+sde:
+  T: 100
+  eps: 0.005
+  max_sigma: 50
+  sampling_mode: sde
+  schedule: cosine
+suffix: null

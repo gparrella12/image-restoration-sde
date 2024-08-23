@@ -1,0 +1,39 @@
+name: my-ir-sde
+suffix: ~  # add suffix to saved images
+model: denoising
+distortion: derain
+gpu_ids: [0]
+
+sde:
+  max_sigma: 10
+  T: 100
+  schedule: cosine # linear, cosine
+  eps: 0.005
+  
+degradation:
+  # for denoising
+  #sigma: 25
+  #noise_type: G # Gaussian noise: G
+
+  # for super-resolution
+  scale: 1
+
+datasets:
+  test1:
+    name: Example_Dataset
+    mode: REC
+    dataroot_GT: /home/prrgpp000/image-restoration-sde/examples_data/y
+    dataroot_LQ: /home/prrgpp000/image-restoration-sde/examples_data/x
+
+#### network structures
+network_G:
+  which_model_G: ConditionalUNet
+  setting:
+    in_nc: 3
+    out_nc: 3
+    nf: 64
+    depth: 4
+
+#### path
+path:
+  pretrain_model_G: /home/prrgpp000/image-restoration-sde/experiments/deblurring/my-ir-sde/models/lastest_EMA.pth

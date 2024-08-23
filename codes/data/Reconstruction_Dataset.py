@@ -41,16 +41,11 @@ class RECDataset(data.Dataset):
                 opt["data_type"], opt["dataroot_LQ"]
             )  # LR list
             #self.GT_paths = util.get_image_paths( opt["data_type"], opt["dataroot_GT"] )  # GT list
-            self.GT_paths = [os.path.join(opt["dataroot_GT"], x.split('_')[-1]) for x in self.LR_paths]
+            if opt["dataroot_GT"] is not None:
+                self.GT_paths = [os.path.join(opt["dataroot_GT"], x.split('_')[-1]) for x in self.LR_paths]
         else:
             print("Error: data_type is not matched in Dataset")
-        assert self.GT_paths, "Error: GT paths are empty."
-        if self.LR_paths and self.GT_paths:
-            assert len(self.LR_paths) == len(
-                self.GT_paths
-            ), "GT and LR datasets have different number of images - {}, {}.".format(
-                len(self.LR_paths), len(self.GT_paths)
-            )
+        #assert self.GT_paths, "Error: GT paths are empty."
         self.random_scale_list = [1]
 
     def _init_lmdb(self):
@@ -80,18 +75,19 @@ class RECDataset(data.Dataset):
         GT_size = self.opt["GT_size"]
         LR_size = self.opt["LR_size"]
 
-        # get GT image
-        GT_path = self.GT_paths[index]
-        if self.opt["data_type"] == "lmdb":
-            resolution = [int(s) for s in self.GT_sizes[index].split("_")]
-        else:
-            resolution = None
-        img_GT = util.read_img(
-            self.GT_env, GT_path, resolution
-        )  # return: Numpy float32, HWC, BGR, [0,1]
+        if self.opt["dataroot_GT"] is not None:
+            # get GT image
+            GT_path = self.GT_paths[index]
+            if self.opt["data_type"] == "lmdb":
+                resolution = [int(s) for s in self.GT_sizes[index].split("_")]
+            else:
+                resolution = None
+            img_GT = util.read_img(
+                self.GT_env, GT_path, resolution
+            )  # return: Numpy float32, HWC, BGR, [0,1]
 
         # modcrop in the validation / test phase
-        if self.opt["phase"] != "train":
+        if self.opt["phase"] != "train" and self.opt["dataroot_GT"] is not None:
             img_GT = util.modcrop(img_GT, scale)
 
         # get LR image
@@ -174,20 +170,30 @@ class RECDataset(data.Dataset):
             ]
 
         # BGR to RGB, HWC to CHW, numpy to tensor
-        if img_GT.shape[2] == 3:
-            img_GT = img_GT[:, :, [2, 1, 0]]
+        
+        if self.opt["dataroot_GT"] is not None:
+            if img_GT.shape[2] == 3:
+                img_GT = img_GT[:, :, [2, 1, 0]]
+                
+        if img_LR.shape[2] == 3:
             img_LR = img_LR[:, :, [2, 1, 0]]
-        img_GT = torch.from_numpy(
-            np.ascontiguousarray(np.transpose(img_GT, (2, 0, 1)))
-        ).float()
+        
+        if self.opt["dataroot_GT"] is not None:
+            img_GT = torch.from_numpy(
+                np.ascontiguousarray(np.transpose(img_GT, (2, 0, 1)))
+            ).float()
+        
         img_LR = torch.from_numpy(
             np.ascontiguousarray(np.transpose(img_LR, (2, 0, 1)))
         ).float()
 
         if LR_path is None:
             LR_path = GT_path
-
-        return {"LQ": img_LR, "GT": img_GT, "LQ_path": LR_path, "GT_path": GT_path}
+        
+        if self.opt["dataroot_GT"] is not None:
+            return {"LQ": img_LR, "GT": img_GT, "LQ_path": LR_path, "GT_path": GT_path}
+        
+        return {"LQ": img_LR, "LQ_path": LR_path}
 
     def __len__(self):
-        return len(self.GT_paths)
+        return len(self.LR_paths)

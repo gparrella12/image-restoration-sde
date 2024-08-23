@@ -1,14 +1,13 @@
 #### general settings
-name: my-dehazing-2
+name: my-refusion
 use_tb_logger: false
-model: latent_denoising
-distortion: dehazing
+model: denoising
+distortion: deblur
 gpu_ids: [0]
 
 sde:
   max_sigma: 50
   T: 100
-  sample_T: 100
   schedule: cosine # linear, cosine
   eps: 0.005
 
@@ -30,12 +29,11 @@ datasets:
 
     use_shuffle: true
     n_workers: 4  # per GPU
-    batch_size: 8
-    GT_size: 224
-    LR_size: 224
+    batch_size: 4
+    GT_size: 128
+    LR_size: 128
     use_flip: false
     use_rot: false
-    use_swap: false
     color: RGB
   val:
     name: Val_Dataset
@@ -46,38 +44,27 @@ datasets:
 
 #### network structures
 network_G:
-  which_model: ConditionalNAFNet
+  which_model_G: ConditionalNAFNet
   setting:
-    img_channel: 8
     width: 64
     enc_blk_nums: [1, 1, 1, 28]
     middle_blk_num: 1
     dec_blk_nums: [1, 1, 1, 1]
 
-network_L:
-  which_model: UNet
-  setting:
-    in_ch: 3
-    out_ch: 3
-    ch: 8
-    ch_mult: [4, 8, 8, 16]
-    embed_dim: 8
-
 #### path
 path:
-  pretrain_model_G: /home/prrgpp000/image-restoration-sde/codes/config/latent-dehazing/pretrained_models/lastest_EMA.pth
+  pretrain_model_G: ~
   strict_load: true
   resume_state: ~
-  pretrain_model_L: pretrained_models/latent-dehazing.pth
 
 #### training settings: learning rate scheme, loss
 train:
-  optimizer: Lion
-  lr_G: !!float 3e-5
+  optimizer: Lion # Adam, AdamW, Lion
+  lr_G: !!float 4e-5
   lr_scheme: TrueCosineAnnealingLR
   beta1: 0.9
   beta2: 0.99
-  niter: 400000
+  niter: 700000
   warmup_iter: -1  # no warm up
   lr_steps: [200000, 400000, 600000]
   lr_gamma: 0.5
@@ -93,5 +80,5 @@ train:
 
 #### logger
 logger:
-  print_freq: 200
+  print_freq: 100
   save_checkpoint_freq: !!float 5e4

@@ -82,7 +82,8 @@ for test_loader in test_loaders:
     for i, test_data in enumerate(test_loader):
         need_GT = False if test_loader.dataset.opt["dataroot_GT"] is None else True
         img_path = test_data["GT_path"][0] if need_GT else test_data["LQ_path"][0]
-        img_name = os.path.splitext(os.path.basename(img_path))[0]
+        #print("path: ",test_data["LQ_path"][0])
+        img_name = os.path.splitext(os.path.basename(test_data["LQ_path"][0]))[0]
         print(img_name)
 
         #### input dataset_LQ
