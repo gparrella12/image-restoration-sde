@@ -1,5 +1,5 @@
 #### general settings
-name: refusion-reconstruction
+name: two-step-deraining
 use_tb_logger: false
 model: denoising
 distortion: derain
@@ -25,7 +25,7 @@ datasets:
     name: Train_Dataset
     mode: REC
     dataroot_GT: /home/prrgpp000/cpa_enhanced/datasets/reconstructions/y
-    dataroot_LQ: /home/prrgpp000/cpa_enhanced/datasets/reconstructions/train_set
+    dataroot_LQ: /home/prrgpp000/cpa_enhanced/datasets/denoised_reconstructions/train_set
 
     use_shuffle: true
     n_workers: 64  # per GPU
@@ -40,7 +40,7 @@ datasets:
     name: Val_Dataset
     mode: REC
     dataroot_GT: /home/prrgpp000/cpa_enhanced/datasets/reconstructions/y
-    dataroot_LQ: /home/prrgpp000/cpa_enhanced/datasets/reconstructions/val_set
+    dataroot_LQ: /home/prrgpp000/cpa_enhanced/datasets/denoised_reconstructions/val_set
 
 
 
@@ -55,10 +55,10 @@ network_G:
 
 #### path
 path:
-  pretrain_model_G: /home/prrgpp000/image-restoration-sde/codes/config/deraining/pretrained/550000_G.pth
+  pretrain_model_G: ~
   strict_load: true
-  #resume_state: /home/prrgpp000/image-restoration-sde/codes/config/deraining/pretrained/550000.state
   resume_state: ~
+  
 #### training settings: learning rate scheme, loss
 train:
   optimizer: Lion # Adam, AdamW, Lion

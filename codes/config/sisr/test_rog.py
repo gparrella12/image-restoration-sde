@@ -22,11 +22,9 @@ from data.util import bgr2ycbcr
 #### options
 parser = argparse.ArgumentParser()
 parser.add_argument("-opt", type=str, required=True, help="Path to options YMAL file.")
-parser.add_argument("-no_gt", action="store_true", help="Test without ground truth.")
-parser.add_argument("-out_path", type=str, default=None, help="Path to save output images.")
+parser.add_argument("-out_path", type=str, required=True, help="Path to output directory.")
 args = parser.parse_args()
-
-opt = option.parse(args.opt, is_train=False)
+opt = option.parse(parser.parse_args().opt, is_train=False)
 
 opt = option.dict_to_nonedict(opt)
 
@@ -73,8 +71,6 @@ device = model.device
 
 sde = util.IRSDE(max_sigma=opt["sde"]["max_sigma"], T=opt["sde"]["T"], schedule=opt["sde"]["schedule"], eps=opt["sde"]["eps"], device=device)
 sde.set_model(model.model)
-sampling_mode = opt["sde"]["sampling_mode"]
-
 lpips_fn = lpips.LPIPS(net='vgg').to(device)
 
 scale = opt['degradation']['scale']
@@ -104,48 +100,37 @@ for test_loader in test_loaders:
         img_name = os.path.splitext(os.path.basename(img_path))[0]
 
         #### input dataset_LQ
-        if not args.no_gt:
-            LQ, GT = test_data["LQ"], test_data["GT"]
-        else:
-            LQ = test_data["LQ"]
-            
+        LQ, GT = test_data["LQ"], test_data["GT"]
+        LQ = util.upscale(LQ, scale)
         noisy_state = sde.noise_state(LQ)
 
-        if args.no_gt:
-            model.feed_data(noisy_state, LQ, GT=None)
-        else:
-            model.feed_data(noisy_state, LQ, GT)
-            
+        model.feed_data(noisy_state, LQ, GT)
         tic = time.time()
-        model.test(sde, mode=sampling_mode, save_states=False)
+        model.test(sde, save_states=True)
         toc = time.time()
         test_times.append(toc - tic)
 
-        visuals = model.get_current_visuals(need_GT=need_GT)
+        visuals = model.get_current_visuals()
         SR_img = visuals["Output"]
         output = util.tensor2img(SR_img.squeeze())  # uint8
         LQ_ = util.tensor2img(visuals["Input"].squeeze())  # uint8
-        if not args.no_gt:
-            GT_ = util.tensor2img(visuals["GT"].squeeze())  # uint8
+        GT_ = util.tensor2img(visuals["GT"].squeeze())  # uint8
         
         suffix = opt["suffix"]
         if suffix:
             save_img_path = os.path.join(dataset_dir, img_name + suffix + ".png")
         else:
             save_img_path = os.path.join(dataset_dir, img_name + ".png")
-        
         util.save_img(output, save_img_path)
-        if args.out_path is not None and os.path.isdir(args.out_path):
-            util.save_img(output, os.path.join(args.out_path, img_name + ".png"))
+
         # remove it if you only want to save output images
         LQ_img_path = os.path.join(dataset_dir, img_name + "_LQ.png")
+        GT_img_path = os.path.join(dataset_dir, img_name + "_HQ.png")
         util.save_img(LQ_, LQ_img_path)
+        util.save_img(GT_, GT_img_path)
         
-        if not args.no_gt:
-            GT_img_path = os.path.join(dataset_dir, img_name + "_HQ.png")
-            util.save_img(GT_, GT_img_path)
-        
-        
+        if args.out_path is not None and os.path.isdir(args.out_path):
+            util.save_img(output, os.path.join(args.out_path, img_name + ".png"))
 
         if need_GT:
             gt_img = GT_ / 255.0
@@ -213,15 +198,15 @@ for test_loader in test_loaders:
         else:
             logger.info(img_name)
 
-    if need_GT:
-        ave_lpips = sum(test_results["lpips"]) / len(test_results["lpips"])
-        ave_psnr = sum(test_results["psnr"]) / len(test_results["psnr"])
-        ave_ssim = sum(test_results["ssim"]) / len(test_results["ssim"])
-        logger.info(
-            "----Average PSNR/SSIM results for {}----\n\tPSNR: {:.6f} dB; SSIM: {:.6f}\n".format(
-                test_set_name, ave_psnr, ave_ssim
-            )
+
+    ave_lpips = sum(test_results["lpips"]) / len(test_results["lpips"])
+    ave_psnr = sum(test_results["psnr"]) / len(test_results["psnr"])
+    ave_ssim = sum(test_results["ssim"]) / len(test_results["ssim"])
+    logger.info(
+        "----Average PSNR/SSIM results for {}----\n\tPSNR: {:.6f} dB; SSIM: {:.6f}\n".format(
+            test_set_name, ave_psnr, ave_ssim
         )
+    )
     if test_results["psnr_y"] and test_results["ssim_y"]:
         ave_psnr_y = sum(test_results["psnr_y"]) / len(test_results["psnr_y"])
         ave_ssim_y = sum(test_results["ssim_y"]) / len(test_results["ssim_y"])
@@ -230,9 +215,9 @@ for test_loader in test_loaders:
                 ave_psnr_y, ave_ssim_y
             )
         )
-    if need_GT:
-        logger.info(
-                "----average LPIPS\t: {:.6f}\n".format(ave_lpips)
-            )
+
+    logger.info(
+            "----average LPIPS\t: {:.6f}\n".format(ave_lpips)
+        )
 
     print(f"average test time: {np.mean(test_times):.4f}")

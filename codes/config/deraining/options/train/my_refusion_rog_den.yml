@@ -1,5 +1,5 @@
 #### general settings
-name: refusion-reconstruction
+name: refusion-rog-denoise
 use_tb_logger: false
 model: denoising
 distortion: derain
@@ -22,26 +22,27 @@ degradation: # for some synthetic dataset that only have GTs
 #### datasets
 datasets:
   train:
+    optimizer: Lion # Adam, AdamW, Lion
     name: Train_Dataset
-    mode: REC
-    dataroot_GT: /home/prrgpp000/cpa_enhanced/datasets/reconstructions/y
-    dataroot_LQ: /home/prrgpp000/cpa_enhanced/datasets/reconstructions/train_set
+    mode: ROG
+    dataroot_GT: /home/prrgpp000/rog/train_dataset/gt
+    dataroot_LQ: /home/prrgpp000/rog/train_dataset/lr
 
     use_shuffle: true
-    n_workers: 64  # per GPU
-    batch_size: 16
-    GT_size: 224
-    LR_size: 224
-    use_flip: false
-    use_rot: false
-    use_swap: false
+    n_workers: 4  # per GPU
+    batch_size: 4
+    GT_size: 32
+    LR_size: 32
+    use_flip: true
+    use_rot: true
     color: RGB
   val:
     name: Val_Dataset
-    mode: REC
-    dataroot_GT: /home/prrgpp000/cpa_enhanced/datasets/reconstructions/y
-    dataroot_LQ: /home/prrgpp000/cpa_enhanced/datasets/reconstructions/val_set
-
+    mode: ROG
+    GT_size: 32
+    LR_size: 32
+    dataroot_GT: /home/prrgpp000/rog/val_dataset/gt
+    dataroot_LQ: /home/prrgpp000/rog/val_dataset/lr
 
 
 #### network structures
@@ -55,7 +56,7 @@ network_G:
 
 #### path
 path:
-  pretrain_model_G: /home/prrgpp000/image-restoration-sde/codes/config/deraining/pretrained/550000_G.pth
+  pretrain_model_G: ~
   strict_load: true
   #resume_state: /home/prrgpp000/image-restoration-sde/codes/config/deraining/pretrained/550000.state
   resume_state: ~
@@ -78,9 +79,9 @@ train:
   weight: 1.0
 
   manual_seed: 0
-  val_freq: !!float 1e5
+  val_freq: !!float 5e4
 
 #### logger
 logger:
   print_freq: 100
-  save_checkpoint_freq: !!float 5e4
+  save_checkpoint_freq: !!float 5e3

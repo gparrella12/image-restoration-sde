@@ -189,7 +189,8 @@ class DenoisingModel(BaseModel):
             logger.info(s)
 
     def load(self):
-        load_path_G = self.opt["path"]["pretrain_model_G"]
+        #load_path_G = self.opt["path"]["pretrain_model_G"]
+        load_path_G = '/home/prrgpp000/image-restoration-sde/codes/config/deraining/pretrained/550000_G.pth'
         if load_path_G is not None:
             logger.info("Loading model for G [{:s}] ...".format(load_path_G))
             self.load_network(load_path_G, self.model, self.opt["path"]["strict_load"])

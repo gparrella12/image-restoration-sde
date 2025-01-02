@@ -19,6 +19,7 @@ def parse(opt_path, is_train=True):
     with open(opt_path, mode="r") as f:
         opt = yaml.load(f, Loader=Loader)
     # export CUDA_VISIBLE_DEVICES
+    #### commentati
     gpu_list = ",".join(str(x) for x in opt["gpu_ids"])
     os.environ["CUDA_VISIBLE_DEVICES"] = gpu_list
     print("export CUDA_VISIBLE_DEVICES=" + gpu_list)

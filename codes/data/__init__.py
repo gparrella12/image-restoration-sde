@@ -59,6 +59,9 @@ def create_dataset(dataset_opt):
     elif mode =='REC':
         from data.Reconstruction_Dataset import RECDataset as D
         dataset = D(dataset_opt)
+    elif mode == 'ROG':
+        from data.Reconstruction_DatasetROG import ROGDataset as D
+        dataset = D(dataset_opt)
     else:
         raise NotImplementedError("Dataset [{:s}] is not recognized.".format(mode))
 

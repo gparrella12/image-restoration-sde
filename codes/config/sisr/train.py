@@ -20,7 +20,7 @@ sys.path.insert(0, "../../")
 import utils as util
 from data import create_dataloader, create_dataset
 from data.data_sampler import DistIterSampler
-
+from torch.utils.data import DistributedSampler
 from data.util import bgr2ycbcr
 
 # torch.autograd.set_detect_anomaly(True)
@@ -28,16 +28,49 @@ from data.util import bgr2ycbcr
 def init_dist(backend="nccl", **kwargs):
     """ initialization for distributed training"""
     # if mp.get_start_method(allow_none=True) is None:
-    if (
-        mp.get_start_method(allow_none=True) != "spawn"
-    ):  # Return the name of start method used for starting processes
-        mp.set_start_method("spawn", force=True)  ##'spawn' is the default on Windows
-    rank = int(os.environ["RANK"])  # system env process ranks
-    num_gpus = torch.cuda.device_count()  # Returns the number of GPUs available
-    torch.cuda.set_device(rank % num_gpus)
-    dist.init_process_group(
-        backend=backend, **kwargs
-    )  # Initializes the default distributed process group
+    #if (
+    #    mp.get_start_method(allow_none=True) != "spawn"
+    #):  # Return the name of start method used for starting processes
+    #    mp.set_start_method("spawn", force=True)  ##'spawn' is the default on Windows
+    #rank = int(os.environ["RANK"])  # system env process ranks
+    #num_gpus = torch.cuda.device_count()  # Returns the number of GPUs available
+    
+    local_rank = int(os.environ.get("LOCAL_RANK", 0))
+    rank = int(os.environ.get("RANK", 0))
+    world_size = int(os.environ.get("WORLD_SIZE", 1))
+
+    print(f"[INFO] RANK={rank}, LOCAL_RANK={local_rank}, WORLD_SIZE={world_size}")
+
+    
+    dist.init_process_group(backend="nccl", init_method="env://")
+
+    torch.cuda.set_device(local_rank)
+    
+    current_device = torch.cuda.current_device()
+    print(f"[INFO] Rank {rank} => GPU {current_device}")
+
+def init_ddp():
+    # Initialize environment variables
+    local_rank = int(os.environ.get("LOCAL_RANK", 0))
+    rank = int(os.environ.get("RANK", 0))
+    world_size = int(os.environ.get("WORLD_SIZE", 1))
+
+    print(f"[INFO] RANK={rank}, LOCAL_RANK={local_rank}, WORLD_SIZE={world_size}")
+
+    # Initialize process group
+    dist.init_process_group(backend="nccl", init_method="env://")
+    # print cuda visible devices
+    print(f"[INFO] Rank {rank} => {torch.cuda.device_count()} GPUs visible")
+    # Get the current GPU ID assigned to this process
+    current_device = torch.cuda.current_device()
+    print(f"Current device ID: {current_device}")
+    print(f"Current device name: {torch.cuda.get_device_name(current_device)}")
+    
+    # Set GPU for this process
+    torch.cuda.set_device(local_rank)
+    print(f"[INFO] Rank {rank} => GPU {local_rank}")
+    
+    return local_rank, rank, world_size
 
 
 def main():
@@ -47,7 +80,6 @@ def main():
     parser.add_argument(
         "--launcher", choices=["none", "pytorch"], default="none", help="job launcher"
     )
-    parser.add_argument("--local_rank", type=int, default=0)
     args = parser.parse_args()
     opt = option.parse(args.opt, is_train=True)
 
@@ -67,13 +99,15 @@ def main():
     else:
         opt["dist"] = True
         opt["dist"] = True
-        init_dist()
-        world_size = (
-            torch.distributed.get_world_size()
-        )  # Returns the number of processes in the current process group
-        rank = torch.distributed.get_rank()  # Returns the rank of current process group
-        # util.set_random_seed(seed)
+        local_rank, rank, world_size = init_ddp()
 
+        #init_dist()
+        #world_size = (
+        #    torch.distributed.get_world_size()
+        #)  # Returns the number of processes in the current process group
+        #rank = torch.distributed.get_rank()  # Returns the rank of current process group
+        # util.set_random_seed(seed)
+    
     torch.backends.cudnn.benchmark = True
     # torch.backends.cudnn.deterministic = True
 
@@ -161,6 +195,7 @@ def main():
                 train_sampler = DistIterSampler(
                     train_set, world_size, rank, dataset_ratio
                 )
+                #train_sampler = DistributedSampler(train_set, num_replicas=world_size, rank=rank)
                 total_epochs = int(
                     math.ceil(total_iters / (train_size * dataset_ratio))
                 )

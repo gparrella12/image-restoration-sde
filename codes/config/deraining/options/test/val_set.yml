@@ -1,15 +1,16 @@
 datasets:
   test1:
-    dataroot_LQ: /home/prrgpp000/cpa_enhanced/exp/imagenet/vgg16/attack/cp_direct/nodef/01_denoise_bs8/initial_images
+    dataroot_GT: /home/prrgpp000/cpa_enhanced/datasets/reconstructions/y
+    dataroot_LQ: /home/prrgpp000/cpa_enhanced/datasets/reconstructions/val_set
     mode: REC
-    name: Example_Dataset
+    name: ValidationSet
 degradation:
   scale: 1
 distortion: derain
 gpu_ids:
 - 0
 model: denoising
-name: my-refusion
+name: validation-set
 network_G:
   setting:
     dec_blk_nums:
@@ -26,7 +27,7 @@ network_G:
     width: 64
   which_model_G: ConditionalNAFNet
 path:
-  pretrain_model_G: /home/prrgpp000/image-restoration-sde/codes/config/deraining/pretrained/550000_G.pth
+  pretrain_model_G: /home/prrgpp000/image-restoration-sde/experiments/deraining/refusion-reconstruction/models/250000_G.pth
 sde:
   T: 100
   eps: 0.005

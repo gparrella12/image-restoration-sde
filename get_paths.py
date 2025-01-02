@@ -26,7 +26,7 @@ def seleziona_file_casuali(cartella, numero_file):
     
     return file_selezionati
 
-def copia_groundtruth(paths, folder, dest_folder=None, check_folder=None):
+def copia_groundtruth(paths, folder, dest_folder=None):
     for file_path in paths:
         print("Source: ", file_path)
         
@@ -70,17 +70,19 @@ def seleziona_e_copia_file_casuali(cartella_origine, numero_file, cartella_groun
         print(f"File selezionato copiato a: {os.path.join(cartella_destinazione_selezionati, os.path.basename(file))}")
     
     # Esegui la copia dei file groundtruth
-    copia_groundtruth(file_selezionati, cartella_groundtruth, cartella_destinazione_groundtruth, check_folder)
+    copia_groundtruth(file_selezionati, cartella_groundtruth, cartella_destinazione_groundtruth)
     if os.path.isdir(folder_to_check):
         check_folder(cartella_destinazione_selezionati, folder_to_check)
     
 # Esempio di utilizzo
-cartella_origine = "/home/prrgpp000/cpa_enhanced/datasets/reconstructions/val_set"
 numero_file = 32
 cartella_groundtruth = "/home/prrgpp000/cpa_enhanced/datasets/reconstructions/y"
-cartella_destinazione_groundtruth = "/home/prrgpp000/image-restoration-sde/examples_data/y"
-cartella_destinazione_selezionati = "/home/prrgpp000/image-restoration-sde/examples_data/x"
-folder_to_check = "/home/prrgpp000/cpa_enhanced/datasets/reconstructions/train_set"
+cartella_origine = "/home/prrgpp000/cpa_enhanced/datasets/denoised_reconstructions/val_set"
+
+cartella_destinazione_groundtruth = "/home/prrgpp000/image-restoration-sde/example_denoised/y"
+cartella_destinazione_selezionati = "/home/prrgpp000/image-restoration-sde/example_denoised/x"
+
+folder_to_check = "/home/prrgpp000/cpa_enhanced/datasets/denoised_reconstructions/train_set"
 
 # elimina tutti file da cartella destinazione groundtruth e selezionati
 shutil.rmtree(cartella_destinazione_groundtruth, ignore_errors=True)

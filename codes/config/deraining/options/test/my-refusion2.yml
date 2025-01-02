@@ -1,6 +1,6 @@
 datasets:
   test1:
-    dataroot_LQ: /home/prrgpp000/cpa_enhanced/exp/imagenet/vgg16/attack/cp_direct/nodef/01_denoise_bs8/initial_images
+    dataroot_LQ: /home/prrgpp000/image-restoration-sde/examples_data/x
     mode: REC
     name: Example_Dataset
 degradation:
@@ -26,7 +26,7 @@ network_G:
     width: 64
   which_model_G: ConditionalNAFNet
 path:
-  pretrain_model_G: /home/prrgpp000/image-restoration-sde/codes/config/deraining/pretrained/550000_G.pth
+  pretrain_model_G: /home/prrgpp000/image-restoration-sde/experiments/deraining/refusion-reconstruction/models/lastest_EMA.pth
 sde:
   T: 100
   eps: 0.005

@@ -165,3 +165,5 @@ slurm-*
 sde_state
 log
 result
+*.pth 
+*.state
